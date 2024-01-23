@@ -30,34 +30,34 @@ environment:
       - curl-dev
       - eudev-dev
       - flex
-      # - gpsd-dev
+      - gpsd-dev
       - hiredis-dev
-      # - i2c-tools-dev
+      - i2c-tools-dev
       - iptables-dev
       - jansson-dev
       - libatasmart-dev
       - libdbi-dev
       - libgcrypt-dev
-      # - libmemcached-dev
-      # - libmicrohttpd-dev
+      - libmemcached-dev
+      - libmicrohttpd-dev
       - libmnl-dev
-      # - libmodbus-dev
+      - libmodbus-dev
       - libnotify-dev
-      # - liboping-dev
+      - liboping-dev
       - libpcap-dev
-      # - libpq-dev # We have libpq-15, is this the same?
+      - libpq-16 # We have libpq-15, is this the same?
       - librdkafka-dev
       - libtool
       - libxml2-dev
-      # - lm-sensors-dev
-      # - lua-dev
+      - lm-sensors-dev
+      - lua5.3-dev
       - mariadb-connector-c-dev
       - mosquitto-dev
-      # - net-snmp-dev
-      # - openipmi-dev 
+      - net-snmp-dev
+      - openipmi-dev
       - openldap-dev
       - openssl-dev>3
-      # - owfs-dev
+      - owfs-dev
       - patchelf
       - perl-dev
       - pkgconf
@@ -65,11 +65,18 @@ environment:
       - python3-dev
       - rabbitmq-c
       - rabbitmq-c-dev
-      # - riemann-c-client-dev
-      # - rrdtool-dev
-      # - varnish-dev # We have non-dev package, is this the same?
+      - riemann-c-client-dev
+      - rrdtool-dev
+      - varnish
       - yajl-dev
       - zlib-dev
+      - openjdk-17-default-jdk
+      - postgresql-16-dev
+      - gdk-pixbuf-dev
+      - mariadb-dev
+      - pango-dev
+      - harfbuzz-dev
+      - cairo-dev
 
 pipeline:
   - uses: git-checkout
@@ -78,10 +85,21 @@ pipeline:
       tag: collectd-${{package.version}}
       expected-commit: 3f935d017e81b7eaf84c9df421490230845dc5c0
 
+  - uses: patch
+    with:
+      patches: fix-cross-compilation.patch
+
+
   - runs: |
       # As per 'generating the configure script' in docs
       # - https://github.com/collectd/collectd/blob/main/README.md
       ./build.sh
+
+      if "${{build.arch}}" == "x86_64"; then
+        _flags="--disable-turbostat"
+      elif "${{build.arch}}" == "aarch64"; then
+        _flags="--disable-java"
+      fi
 
       # Configure options, copied from:
       # - https://git.alpinelinux.org/aports/tree/community/collectd/APKBUILD#n13
@@ -131,14 +149,50 @@ pipeline:
         --disable-write_prometheus \
         --disable-xencpu \
         --disable-xmms \
-        --disable-zone
+        --disable-virt \
+        --disable-pinba \
+        --disable-barometer \
+        --disable-capabilities \
+        --disable-turbostat \
+        --disable-write_riemann \
+        --disable-ping \
+        --disable-zone \
+        $_flags
 
-      make
-      make install DESTDIR="${{targets.destdir}}"
+        make
+
+        make DESTDIR="${{targets.destdir}}" install
+        find "${{targets.destdir}}" \( -name perllocal.pod -o -name .packlist \) -delete
+
+
+        mkdir -p "${{targets.destdir}}"/etc/collectd.d
+        mkdir -p "${{targets.destdir}}"/etc/init.d
+        mkdir -p "${{targets.destdir}}"/usr/include/collectd/core
+        mkdir -p "${{targets.destdir}}"/usr/include/collectd/liboconfig
+
+        install -D -m755 ./${{package.name}}.initd "${{targets.destdir}}"/etc/init.d/${{package.name}}
+
+         # Install all header files to allow building out-of-tree plugins.
+         # This is based on Debian.
+         for path in $(find src -path src/libcollectdclient -prune \
+         	-o -path src/liboconfig -prune \
+         	-o -name '*.h' -print)
+         do
+         	install -D -m644 "$path" "${{targets.destdir}}"/usr/include/collectd/core/${path#src/}
+         done
+
+        install -D -m644 ./src/liboconfig/oconfig.h -t "${{targets.destdir}}"/usr/include/collectd/liboconfig/
+        cd "${{targets.destdir}}"/usr/include/collectd/
+        # Update include path for collectd core header files.
+        headers=$(find ./core ./liboconfig -type f -name '*.h')
+        for path in $headers; do
+        	sed -r -i "s|(include\s+)\".*\<${path##*/}\"|\1\"collectd/${path#./}\"|" $headers
+        done
+
+  - uses: strip
 
 update:
   enabled: true
   github:
     identifier: collectd/collectd
-
-
+    strip-prefix: collectd-
