@@ -1,6 +1,6 @@
 package:
   name: reflex
-  version: 0.4.0
+  version: 0.4.2
   epoch: 0
   description: "Web apps in pure Python"
   copyright:
@@ -32,7 +32,7 @@ pipeline:
     with:
       repository: https://github.com/reflex-dev/reflex
       tag: v${{package.version}}
-      expected-commit: 899e35edbae86f97890c49528df599681308db57
+      expected-commit: b13a25c1f697b2de961cdfc8b3d4db7ad131205d
 
   - runs: |
       poetry build
