@@ -1,6 +1,6 @@
 package:
   name: deno
-  version: 1.43.4
+  version: 1.44.1
   epoch: 0
   description: "A modern runtime for JavaScript and TypeScript."
   copyright:
@@ -28,13 +28,13 @@ pipeline:
     with:
       repository: https://github.com/denoland/deno
       tag: v${{package.version}}
-      expected-commit: d64921c1906ee1ac39230c16abe9ff8c546bd645
+      expected-commit: e02a32be2797f7c107d19da8bf2aff5bbcd97bad
 
   - name: Configure and build
     runs: |
       cargo build --release -vv
-      mkdir -p ${{targets.destdir}}/usr/bin/
-      mv target/release/deno ${{targets.destdir}}/usr/bin/
+      mkdir -p ${{targets.contextdir}}/usr/bin/
+      mv target/release/deno ${{targets.contextdir}}/usr/bin/
 
   - uses: strip
 

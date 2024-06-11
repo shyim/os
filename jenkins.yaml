@@ -1,6 +1,6 @@
 package:
   name: jenkins
-  version: "2.458"
+  version: "2.461"
   epoch: 0
   description: Open-source CI/CD application.
   copyright:
@@ -44,7 +44,7 @@ pipeline:
     with:
       repository: https://github.com/jenkinsci/jenkins
       tag: jenkins-${{package.version}}
-      expected-commit: f0d4f26bc87ad99954b7f1f7e54570a0f16e41e6
+      expected-commit: 896e0f30e8c5ea8afbdcb0b503aa197372113027
 
   - uses: patch
     with:

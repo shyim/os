@@ -1,7 +1,7 @@
 package:
   name: redka
-  version: 0.4.0
-  epoch: 1
+  version: 0.5.1
+  epoch: 0
   description: Redis re-implemented with SQLite
   copyright:
     - license: BSD-3-Clause
@@ -20,7 +20,7 @@ pipeline:
   - uses: git-checkout
     with:
       repository: https://github.com/nalgeon/redka
-      expected-commit: 7b25c85f8f60fcfb92c4ab939bf23edd27c0ba97
+      expected-commit: f631c08f30bca0e27c490bc4bb2ee27acf4a2df8
       tag: v${{package.version}}
 
   - runs: |

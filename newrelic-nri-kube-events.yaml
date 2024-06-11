@@ -1,6 +1,6 @@
 package:
   name: newrelic-nri-kube-events
-  version: 2.9.7
+  version: 2.9.9
   epoch: 0
   description: New Relic integration that forwards Kubernetes events to New Relic
   copyright:
@@ -21,7 +21,7 @@ pipeline:
     with:
       repository: https://github.com/newrelic/nri-kube-events
       tag: v${{package.version}}
-      expected-commit: 80d0891e97fdae45e5bd1c856b23caf06cd79ee0
+      expected-commit: 308e90a1db9e888285663edbeb473064ab39d3e5
 
   - uses: go/build
     with:
